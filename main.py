@@ -8,7 +8,7 @@ import asyncpg
 from replit import db
 import math
 
-
+# Simple help command
 class revisedHelpCommand(commands.MinimalHelpCommand):
     async def send_pages(self):
         destination = self.get_destination()
@@ -21,7 +21,7 @@ class revisedHelpCommand(commands.MinimalHelpCommand):
             e.description += page
         await destination.send(embed=e)
 
-
+# Command prefix that the bot will use to recognise commands.
 prefix = "."
 
 # Client Setup
@@ -29,7 +29,7 @@ client = commands.Bot(command_prefix=prefix,
                       intents=discord.Intents.all(),
                       help_command=revisedHelpCommand())
 
-# Constants
+# Time units correspond to 1 of that unit in seconds
 timeUnits = {
     "s": {
         "s": 1,
@@ -57,26 +57,35 @@ timeUnits = {
     }
 }
 
+# When the bot is fully initialised
 @client.event
 async def on_ready():
     print("Ready to go!")
 
-
+# When a message is sent in any channel
 @client.event
 async def on_message(ctx):
     await client.process_commands(ctx)
+    # If the contents of that message is "Hello!"
     if ctx.content == "Hello!":
+        # It will send "HI!" in the channel the message was sent in.
         await ctx.channel.send("Hi!")
 
-
 async def sendError(ctx, *error):
+    """
+    Handles sending error messages. Accepts the message context and the error message as an *arg.
+    """
+
+    # Constructs an embed object to be sent.
     embed = discord.Embed(title="Error encountered!",
                           description=" ".join(error),
                           color=0xFF4500)
     await ctx.channel.send(embed=embed)
 
-
 class loopCog(commands.Cog):
+    """
+    Cog that handles looping through the repl database.
+    """
     def __init__(self, bot):
         self.bot = bot
         self.data = []
@@ -86,22 +95,28 @@ class loopCog(commands.Cog):
     def cog_unload(self):
         self.batch_update.cancel()
 
+    # Uses tasks library to loop through this code every second.
     @tasks.loop(seconds=1.0)
     async def batch_update(self):
+        # Runs through the Database
         for i in db.keys():
+            # Gets the value at that index
             val = db[i]
+            # Splits the string into a usable list
             valList = val.split(";")
+            # Gets list values
             ttr = float(valList[0])
             reminder = valList[1]
             authorID = valList[2]
             timeSet = valList[3]
-            if ttr > time.time():
-                print("Skipped.")
-            elif ttr <= time.time():
+            # Checks if the time to remind is less than or equal to the current time.
+            if ttr <= time.time():
+                # Format time set
                 dateTimeObj = datetime.utcfromtimestamp(float(timeSet))
                 timestampStr = dateTimeObj.strftime(
                     "%d of %B, %Y, at %I%p, %Mm, %Ss (UTC)")
 
+                # Initialise embed
                 embedSend = discord.Embed(
                     title="Reminder!",
                     description="Here's a reminder you set.")
@@ -116,11 +131,12 @@ class loopCog(commands.Cog):
                 embedSend.timestamp = datetime.now()
                 embedSend.set_footer(text="By Bence")
 
+                # Get user and send the message privately
                 userObj = await client.fetch_user(int(authorID))
                 await userObj.send(embed=embedSend)
                 del db[i]
 
-
+# Start loop
 laLoop = loopCog(client)
 
 
