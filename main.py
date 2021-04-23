@@ -7,6 +7,8 @@ from datetime import datetime
 import asyncpg
 from replit import db
 import math
+import random
+import asyncio
 
 # Simple help command
 class revisedHelpCommand(commands.MinimalHelpCommand):
@@ -21,13 +23,13 @@ class revisedHelpCommand(commands.MinimalHelpCommand):
             e.description += page
         await destination.send(embed=e)
 
+# CONSTANTS
+
 # Command prefix that the bot will use to recognise commands.
 prefix = "."
 
-# Client Setup
-client = commands.Bot(command_prefix=prefix,
-                      intents=discord.Intents.all(),
-                      help_command=revisedHelpCommand())
+# List of commands that fall under "random"
+randomCommands = ["coin","number"]
 
 # Time units correspond to 1 of that unit in seconds
 timeUnits = {
@@ -56,6 +58,11 @@ timeUnits = {
         "n": "months(s)"
     }
 }
+
+# Client Setup
+client = commands.Bot(command_prefix=prefix,
+                      intents=discord.Intents.all(),
+                      help_command=revisedHelpCommand())
 
 # When the bot is fully initialised
 @client.event
@@ -209,9 +216,42 @@ class utilityCog(commands.Cog, name="Utility"):
                 reminderObj = f"{timeToRemind};{reasonF};{ctx.author.id};{time.time()}"
                 db[str(len(db.keys()))] = reminderObj
 
+class funCog(commands.Cog, name="Fun"):
+    """
+    Commands that don't necessarily serve a purpose or fit in any specific category. Give them a go!
+    """
+    @commands.command()
+    async def random(self, ctx, *cmdArgs):
+        if cmdArgs == ():
+            ranCmdStr = ", ".join(randomCommands)
+            await sendError(ctx, f"Please enter a valid generator, such as: {ranCmdStr}.")
+        else:
+            if str(cmdArgs[0]) not in randomCommands:
+                ranCmdStr = ", ".join(randomCommands)
+                await sendError(ctx, f"Please enter a valid generator, such as: {ranCmdStr}.")
+            else:
+                if str(cmdArgs[0]) == "coin":
+                    embed=discord.Embed(title="Flipping a Coin!", description="Give it a second...", color=0xddd736)
+                    embed.set_thumbnail(url="https://i.pinimg.com/originals/d7/49/06/d74906d39a1964e7d07555e7601b06ad.gif")
+                    embed.add_field(name="Result...", value="Wait!", inline=False)
+                    msgToEdit = await ctx.send(embed=embed)
+                    await asyncio.sleep(3)
+                    
+                    if random.randint(0,1) == 0:
+                        cResult = "Heads!"
+                        cImg = "https://images-na.ssl-images-amazon.com/images/I/51xs7F%2BtP5L._AC_.jpg"
+                    else:
+                        cResult = "Tails!"
+                        cImg = "https://m.media-amazon.com/images/I/51NyMaKLydL._SL500_.jpg"
+                    embed=discord.Embed(title="Flipped a coin!", description="Here's the result", color=0xddd736)
+                    embed.set_thumbnail(url=cImg)
+                    embed.add_field(name="Result...", value=cResult, inline=False)
+                    await msgToEdit.edit(embed=embed)
+
 
 client.add_cog(utilityCog(client))
 client.add_cog(moderationCog(client))
+client.add_cog(funCog(client))
 
 keep_alive()
 token = os.environ.get("DISCORD_TOKEN")
