@@ -9,6 +9,8 @@ from replit import db
 import math
 import random
 import asyncio
+import json
+import requests
 
 # Simple help command
 class revisedHelpCommand(commands.MinimalHelpCommand):
@@ -24,12 +26,11 @@ class revisedHelpCommand(commands.MinimalHelpCommand):
         await destination.send(embed=e)
 
 # CONSTANTS
-
 # Command prefix that the bot will use to recognise commands.
 prefix = "."
 
 # List of commands that fall under "random"
-randomCommands = ["coin","number"]
+randomCommands = ["coin","num"]
 
 # Time units correspond to 1 of that unit in seconds
 timeUnits = {
@@ -88,6 +89,11 @@ async def sendError(ctx, *error):
                           description=" ".join(error),
                           color=0xFF4500)
     await ctx.channel.send(embed=embed)
+
+async def jUnpack(obj):
+    # Create a formatted string of the Python JSON object
+    text = json.load(obj, sort_keys=True, indent=4)
+    return text
 
 class loopCog(commands.Cog):
     """
@@ -220,7 +226,7 @@ class funCog(commands.Cog, name="Fun"):
     """
     Commands that don't necessarily serve a purpose or fit in any specific category. Give them a go!
     """
-    @commands.command()
+    @commands.command(usage="[coin, num] [. . . args . . .]",description="Generates some random stuff. Very cool.")
     async def random(self, ctx, *cmdArgs):
         if cmdArgs == ():
             ranCmdStr = ", ".join(randomCommands)
@@ -247,7 +253,67 @@ class funCog(commands.Cog, name="Fun"):
                     embed.set_thumbnail(url=cImg)
                     embed.add_field(name="Result...", value=cResult, inline=False)
                     await msgToEdit.edit(embed=embed)
+                
+                if str(cmdArgs[0]) == "num":
+                    try:
+                        ran1 = int(cmdArgs[1])
+                        ran2 = int(cmdArgs[2])
+                        print(ran1, ran2)
 
+                        # Sets the numbers in order
+                        if ran1 > ran2:
+                            tempRan1 = ran1
+
+                            ran1 = ran2
+                            ran2 = tempRan1
+                        
+                        print(ran1,ran2)
+
+                        ranReturn = random.randint(ran1, ran2)
+
+                        e = discord.Embed(title="Random Number!", description=f"Generated between {ran1} and {ran2}.")
+                        e.add_field(name="Result...",value=f"{ranReturn}!")
+
+                        await ctx.channel.send(embed=e)
+                    except IndexError:
+                        await sendError(ctx, "Please enter 2 numbers!")
+                    except ValueError:
+                        await sendError(ctx, "Please enter a valid number.")
+                    except:
+                        await sendError(ctx, "Unexpected error encountered.")
+    @commands.command()
+    async def dog(self, ctx):
+        dogReq = requests.get("https://dog.ceo/api/breeds/image/random")
+        embed = discord.Embed(title="Dog!",description="Here's a random dog I found.")
+        embed.set_footer(text="Provided by dog.ceo")
+        embed.set_image(url=dogReq.json()["message"])
+        await ctx.channel.send(embed=embed)
+    
+    @commands.command()
+    async def cat(self, ctx):
+        catReq = requests.get("https://api.thecatapi.com/v1/images/search")
+        embed = discord.Embed(title="Cat!",description="Here's a random cat I found.")
+        embed.set_image(url=catReq.json()[0]["url"])
+        embed.set_footer(text="Provided by thecatapi.com")
+        await ctx.channel.send(embed=embed)
+    
+    @commands.command()
+    async def fox(self, ctx):
+        foxReq = requests.get("https://randomfox.ca/floof/")
+        embed = discord.Embed(title="Fox!",description="Here's a random fox I found.")
+        embed.set_image(url=foxReq.json()["image"])
+        embed.set_footer(text="Provided by randomfox.ca")
+        await ctx.channel.send(embed=embed)
+
+    @commands.command()
+    async def numfact(self,ctx,num):
+        try:
+            numReq = requests.get(f"http://numbersapi.com/{num},1")
+            embed=discord.Embed(title=f"Number Fact for {num}!", description=numReq.json()[num])
+            embed.set_footer(text="Provided by numbersapi.com")
+            await ctx.channel.send(embed=embed)
+        except:
+            await sendError(ctx, "Please enter a number!")
 
 client.add_cog(utilityCog(client))
 client.add_cog(moderationCog(client))
