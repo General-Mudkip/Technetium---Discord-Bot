@@ -63,7 +63,7 @@ iconUrl = "https://media.discordapp.net/attachments/833730060753436704/836585122
 
 # Keys
 opwkey = os.environ['open_weather_key']
-
+gkey = os.environ["GOOGLE_KEY"]
 
 # Client Setup
 client = commands.Bot(command_prefix=prefix,
@@ -247,8 +247,57 @@ class utilityCog(commands.Cog, name="Utility"):
     # WAITING ON KEY AUTHORISATION AT THE MOMENT
     @commands.command()
     async def weather(self, ctx, city):
-        wReq = requests.get(f"https://api.openweathermap.org/data/2.5/weather?q=London&appid={opwkey}")
-        print(wReq)
+        """
+        Returns weather data about a given city.
+        """
+
+        # Gets json data from API using city name + api key
+        wReq = requests.get(f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={opwkey}")
+
+        # Checks if city was found or not
+        if wReq.status_code == 404:
+            await sendError(ctx, "City not found!") 
+        else:
+            wjson = wReq.json()
+
+            # Creates initial embed
+            e = discord.Embed(title=f"Current Weather",description=f"Checked {city}'s current weather.")
+            e.timestamp = datetime.now()
+            e.set_footer(text="Provided by OpenWeather", icon_url=iconUrl)
+
+            # Coordinate data
+            e.add_field(name="Longitude",value=wjson["coord"]["lon"])
+            e.add_field(name="Latitude",value=wjson["coord"]["lat"])
+
+            # Empty field, acts as a separator
+            e.add_field(name="\u200B",value="\u200B",inline=False)
+
+            # Getting weather data
+            clouds = wjson["clouds"]["all"]
+            temp = wjson["main"]["temp"]
+            feels_like = wjson["main"]["feels_like"]
+            pressure = wjson["main"]["pressure"]
+            humidity = wjson["main"]["humidity"]  
+
+            # Adding weather data to embed
+            e.add_field(name="Weather",value=wjson["weather"][0]["description"].title())
+            e.add_field(name="Cloud Coverage",value=f"{clouds}%")
+
+            e.add_field(name="\u200B",value="\u200B",inline=False)
+
+            e.add_field(name="Temperature",value=f"{temp}K",inline=1)
+            e.add_field(name="Feels Like",value=f"{feels_like}K",inline=1)
+            e.add_field(name="Pressure",value=f"{pressure} hPa",inline=1)
+            e.add_field(name="Humidity",value=f"{humidity}%",inline=1)
+
+            # CITY IMAGES
+            # Google Cloud API requires billing, can't set it up without entering credit card info. Yikes
+            
+            #placeID = requests.get(f"https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input={city}&key={gkey}&inputtype=textquery")
+
+            #print(placeID,placeID.json())
+
+            await ctx.channel.send(embed=e)
 
 class funCog(commands.Cog, name="Fun"):
     """
