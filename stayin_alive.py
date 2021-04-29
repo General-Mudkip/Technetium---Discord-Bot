@@ -1,11 +1,12 @@
 from flask import Flask
 from threading import Thread
+import test
 
 app = Flask('')
 
 @app.route('/')
 def home():
-    return "i may or may not be alive"
+    return "YO"
 
 def run():
   app.run(host='0.0.0.0',port=8080)

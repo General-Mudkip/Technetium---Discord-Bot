@@ -10,6 +10,7 @@ import math
 import random
 import asyncio
 import requests
+from better_profanity import profanity
 
 # Simple help command
 class revisedHelpCommand(commands.MinimalHelpCommand):
@@ -85,6 +86,8 @@ async def on_message(ctx):
         # It will send "HI!" in the channel the message was sent in.
         responseList = ["Yo!","Bonjour.","Wassup?","Hey.","Hello.","Hi!"]
         await ctx.channel.send(responseList[random.randint(0,len(responseList)-1)])
+    if profanity.contains_profanity(ctx.content) == True:
+        await ctx.delete()
 
 async def sendError(ctx, *error):
     """
@@ -293,9 +296,20 @@ class utilityCog(commands.Cog, name="Utility"):
             # CITY IMAGES
             # Google Cloud API requires billing, can't set it up without entering credit card info. Yikes
             
-            #placeID = requests.get(f"https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input={city}&key={gkey}&inputtype=textquery")
+            placeID = requests.get(f"https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input={city}&key={gkey}&inputtype=textquery")
 
-            #print(placeID,placeID.json())
+            if placeID.json()["status"] == "OK":
+                photoid = placeID.json()["candidates"][0]["place_id"]
+
+                place_details = requests.get(f"https://maps.googleapis.com/maps/api/place/details/json?place_id={photoid}&key={gkey}&fields=photo")
+
+                photoref = place_details.json()["result"]["photos"][0]["photo_reference"]
+
+                try:
+                    e.set_image(url=f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference={photoref}&key={gkey}&maxwidth=1600")
+                except:
+                    print("error")
+                    pass
 
             await ctx.channel.send(embed=e)
 
@@ -397,7 +411,6 @@ class funCog(commands.Cog, name="Fun"):
         """
         Sends a random image of a cat, using the thecatapi API.
         """
-
         # Gets json data from API
         catReq = requests.get("https://api.thecatapi.com/v1/images/search")
         # Creates embed
