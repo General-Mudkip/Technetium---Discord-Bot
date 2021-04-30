@@ -294,21 +294,26 @@ class utilityCog(commands.Cog, name="Utility"):
             e.add_field(name="Humidity",value=f"{humidity}%",inline=1)
 
             # CITY IMAGES
-            # Google Cloud API requires billing, can't set it up without entering credit card info. Yikes
+            # Google Cloud API shenanigans
             
+            # Gets the Place ID from the Google API
             placeID = requests.get(f"https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input={city}&key={gkey}&inputtype=textquery")
 
+            # Checks if an ID was returned
             if placeID.json()["status"] == "OK":
                 photoid = placeID.json()["candidates"][0]["place_id"]
 
+                # Grabs the place details JSON using the Place ID
                 place_details = requests.get(f"https://maps.googleapis.com/maps/api/place/details/json?place_id={photoid}&key={gkey}&fields=photo")
 
+                # Gets the Photo Reference from the JSON provided by the details request
                 photoref = place_details.json()["result"]["photos"][0]["photo_reference"]
 
                 try:
+                    # Sets the embed image to the place's photo, using the photoreference
                     e.set_image(url=f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference={photoref}&key={gkey}&maxwidth=1600")
                 except:
-                    print("error")
+                    # print("error")
                     pass
 
             await ctx.channel.send(embed=e)
