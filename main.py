@@ -476,7 +476,7 @@ class funCog(commands.Cog, name="Fun"):
     @commands.command()
     async def pokemon(self, ctx, pokemon):
         try:
-            req = requests.get(f"https://pokeapi.co/api/v2/pokemon/{pokemon.lowercase()}")
+            req = requests.get(f"https://pokeapi.co/api/v2/pokemon/{pokemon.lower()}")
             e = discord.Embed(title=f"{pokemon.title()}!",description=f"Here's a photo of {pokemon.title()}")
             e.set_image(url=req.json()["sprites"]["front_default"])
             
