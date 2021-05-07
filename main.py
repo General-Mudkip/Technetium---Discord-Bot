@@ -333,6 +333,40 @@ class utilityCog(commands.Cog, name="Utility"):
 
         await ctx.channel.send(embed=e) 
         
+    @commands.command(usage="<country>")
+    async def country(self, ctx, cName):
+        req = requests.get(f"https://restcountries.eu/rest/v2/name/{cName.lower()}")
+
+        rjs = req.json()
+
+        c_name = rjs[0]["name"]
+
+        e = discord.Embed(title=f"{c_name}!",description=f"Here's some data I found about {c_name}.")
+
+        e.add_field(name="Region",value=rjs[0]["region"])
+        e.add_field(name="Subregion",value=rjs[0]["subregion"])
+        e.add_field(name="Capital",value=rjs[0]["capital"])
+        e.add_field(name="Latitude", value=rjs[0]["latlng"][0])
+        e.add_field(name="Longitude", value=rjs[0]["latlng"][1])
+
+        e.add_field(name="\u200B",value="\u200B",inline=False)
+
+        e.add_field(name="Population",value=rjs[0]["population"])
+        e.add_field(name="Timezone",value=rjs[0]["timezones"][0])
+        e.add_field(name="Currency", value=rjs[0]["currencies"][0]["name"])
+        e.add_field(name="Lanague",value=rjs[0]["languages"][0]["name"])
+
+        cc = rjs[0]["alpha2Code"]
+
+        furl = f"https://www.countryflags.io/{cc}/flat/64.png"
+        print(furl)
+
+        e.set_thumbnail(url=furl)
+
+        e.timestamp = datetime.now()
+        e.set_footer(text="Technetium", icon_url=iconUrl)
+
+        await ctx.channel.send(embed=e)
 
 class funCog(commands.Cog, name="Fun"):
     """
