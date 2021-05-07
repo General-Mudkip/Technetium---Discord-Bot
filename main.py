@@ -11,6 +11,7 @@ import random
 import asyncio
 import requests
 from better_profanity import profanity
+import urllib.parse
 
 # Simple help command
 class revisedHelpCommand(commands.MinimalHelpCommand):
@@ -65,6 +66,7 @@ iconUrl = "https://media.discordapp.net/attachments/833730060753436704/836585122
 # Keys
 opwkey = os.environ['open_weather_key']
 gkey = os.environ["GOOGLE_KEY"]
+wakey = os.environ["WOLFRAM_ALPHA_ID"]
 
 # Client Setup
 client = commands.Bot(command_prefix=prefix,
@@ -318,6 +320,20 @@ class utilityCog(commands.Cog, name="Utility"):
 
             await ctx.channel.send(embed=e)
 
+    @commands.command()
+    async def equation(self, ctx, *equation):
+        inputer = " ".join(equation)
+        query = urllib.parse.quote_plus(inputer)
+
+        e = discord.Embed(title="Equation!", description="Here's your equation:")
+        e.set_image(url=f"https://chart.apis.google.com/chart?chf=bg,s,fffff0&cht=tx&chl={query}")
+
+        e.set_footer(text="Technetium", icon_url=iconUrl)
+        e.timestamp = datetime.now()
+
+        await ctx.channel.send(embed=e) 
+        
+
 class funCog(commands.Cog, name="Fun"):
     """
     Commands that don't necessarily serve a purpose or fit in any specific category. Give them a go!
@@ -457,6 +473,19 @@ class funCog(commands.Cog, name="Fun"):
         # Error handling
         except:
             await sendError(ctx, "Please enter a number!")
+    @commands.command()
+    async def pokemon(self, ctx, pokemon):
+        try:
+            req = requests.get(f"https://pokeapi.co/api/v2/pokemon/{pokemon.lowercase()}")
+            e = discord.Embed(title=f"{pokemon.title()}!",description=f"Here's a photo of {pokemon.title()}")
+            e.set_image(url=req.json()["sprites"]["front_default"])
+            
+            e.set_footer(text="Technetium", icon_url=iconUrl)
+            e.timestamp = datetime.now()
+
+            await ctx.channel.send(embed=e)
+        except:
+            await sendError(ctx, "Error encountered!")
 
 # Adds all of the cogs (classes) to the bot
 client.add_cog(utilityCog(client))
