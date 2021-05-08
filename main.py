@@ -13,6 +13,7 @@ import requests
 from better_profanity import profanity
 import urllib.parse
 import yfinance as yf
+import traceback
 
 # Simple help command
 class revisedHelpCommand(commands.MinimalHelpCommand):
@@ -71,9 +72,10 @@ wakey = os.environ["WOLFRAM_ALPHA_ID"]
 
 # Client Setup
 client = commands.Bot(command_prefix=prefix,
-                      intents=discord.Intents.all(),
-                      help_command=revisedHelpCommand())
+                    intents=discord.Intents.all(),
+                    help_command=revisedHelpCommand())
 client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="dogs."))
+
 
 # When the bot is fully initialised
 @client.event
@@ -314,8 +316,8 @@ class utilityCog(commands.Cog, name="Utility"):
                 try:
                     # Sets the embed image to the place's photo, using the photoreference
                     e.set_image(url=f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference={photoref}&key={gkey}&maxwidth=1600")
-                except:
-                    print("error fetching image")
+                except BaseException: 
+                    print("Error fetching image.")
 
 
             await ctx.channel.send(embed=e)
@@ -367,8 +369,8 @@ class utilityCog(commands.Cog, name="Utility"):
             e.set_footer(text="Technetium", icon_url=iconUrl)
 
             await ctx.channel.send(embed=e)
-        except:
-            await sendError(ctx, "Unknown error encountered.")
+        except BaseException: 
+            await sendError(ctx, "Unexpected error encountered.")
 
 class stocksCog(commands.Cog, name = "Stocks"):
     """
@@ -462,7 +464,7 @@ class funCog(commands.Cog, name="Fun"):
                         await sendError(ctx, "Please enter 2 numbers!")
                     except ValueError:
                         await sendError(ctx, "Please enter a valid number.")
-                    except:
+                    except BaseException: 
                         await sendError(ctx, "Unexpected error encountered.")
 
     @commands.command()
@@ -524,9 +526,9 @@ class funCog(commands.Cog, name="Fun"):
             embed.timestamp = datetime.now()
             await ctx.channel.send(embed=embed)
         # Error handling
-        except:
-            await sendError(ctx, "Please enter a number!")
-            
+        except BaseException: 
+            await sendError(ctx, "Please enter a valid number!")
+
     @commands.command(usage = "<pokemon>")
     async def pokemon(self, ctx, pokemon):
         try:
@@ -538,8 +540,8 @@ class funCog(commands.Cog, name="Fun"):
             e.timestamp = datetime.now()
 
             await ctx.channel.send(embed=e)
-        except:
-            await sendError(ctx, "Error encountered!")
+        except BaseException: 
+            await sendError(ctx, "Unexpected error encountered!")
 
 # Adds all of the cogs (classes) to the bot
 client.add_cog(utilityCog(client))
