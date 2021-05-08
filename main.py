@@ -12,6 +12,7 @@ import asyncio
 import requests
 from better_profanity import profanity
 import urllib.parse
+import yfinance as yf
 
 # Simple help command
 class revisedHelpCommand(commands.MinimalHelpCommand):
@@ -88,7 +89,7 @@ async def on_message(ctx):
         # It will send "HI!" in the channel the message was sent in.
         responseList = ["Yo!","Bonjour.","Wassup?","Hey.","Hello.","Hi!"]
         await ctx.channel.send(responseList[random.randint(0,len(responseList)-1)])
-    if profanity.contains_profanity(ctx.content) == True:
+    if profanity.contains_profanity(ctx.content) is True:
         await ctx.delete()
 
 async def sendError(ctx, *error):
@@ -174,7 +175,7 @@ class moderationCog(commands.Cog, name="Moderation"):
         """
         Purges a set amount of messages.
         """
-        if count == None:
+        if count is None:
             await sendError(
                 ctx, "Please enter the amount of messages you want to remove.")
         else:
@@ -249,8 +250,7 @@ class utilityCog(commands.Cog, name="Utility"):
                 reminderObj = f"{timeToRemind};{reasonF};{ctx.author.id};{time.time()}"
                 db[str(len(db.keys()))] = reminderObj
 
-    # WAITING ON KEY AUTHORISATION AT THE MOMENT
-    @commands.command()
+    @commands.command(usage = "<city>")
     async def weather(self, ctx, city):
         """
         Returns weather data about a given city.
@@ -315,12 +315,12 @@ class utilityCog(commands.Cog, name="Utility"):
                     # Sets the embed image to the place's photo, using the photoreference
                     e.set_image(url=f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference={photoref}&key={gkey}&maxwidth=1600")
                 except:
-                    # print("error")
-                    pass
+                    print("error fetching image")
+
 
             await ctx.channel.send(embed=e)
 
-    @commands.command()
+    @commands.command(usage = "<equation>")
     async def equation(self, ctx, *equation):
         inputer = " ".join(equation)
         query = urllib.parse.quote_plus(inputer)
@@ -335,38 +335,57 @@ class utilityCog(commands.Cog, name="Utility"):
         
     @commands.command(usage="<country>")
     async def country(self, ctx, cName):
-        req = requests.get(f"https://restcountries.eu/rest/v2/name/{cName.lower()}")
+        try:
+            req = requests.get(f"https://restcountries.eu/rest/v2/name/{cName.lower()}")
 
-        rjs = req.json()
+            rjs = req.json()
 
-        c_name = rjs[0]["name"]
+            c_name = rjs[0]["name"]
 
-        e = discord.Embed(title=f"{c_name}!",description=f"Here's some data I found about {c_name}.")
+            e = discord.Embed(title=f"{c_name}!",description=f"Here's some data I found about {c_name}.")
 
-        e.add_field(name="Region",value=rjs[0]["region"])
-        e.add_field(name="Subregion",value=rjs[0]["subregion"])
-        e.add_field(name="Capital",value=rjs[0]["capital"])
-        e.add_field(name="Latitude", value=rjs[0]["latlng"][0])
-        e.add_field(name="Longitude", value=rjs[0]["latlng"][1])
+            e.add_field(name="Region",value=rjs[0]["region"])
+            e.add_field(name="Subregion",value=rjs[0]["subregion"])
+            e.add_field(name="Capital",value=rjs[0]["capital"])
+            e.add_field(name="Latitude", value=rjs[0]["latlng"][0])
+            e.add_field(name="Longitude", value=rjs[0]["latlng"][1])
 
-        e.add_field(name="\u200B",value="\u200B",inline=False)
+            e.add_field(name="\u200B",value="\u200B",inline=False)
 
-        e.add_field(name="Population",value=rjs[0]["population"])
-        e.add_field(name="Timezone",value=rjs[0]["timezones"][0])
-        e.add_field(name="Currency", value=rjs[0]["currencies"][0]["name"])
-        e.add_field(name="Lanague",value=rjs[0]["languages"][0]["name"])
+            e.add_field(name="Population",value=rjs[0]["population"])
+            e.add_field(name="Timezone",value=rjs[0]["timezones"][0])
+            e.add_field(name="Currency", value=rjs[0]["currencies"][0]["name"])
+            e.add_field(name="Lanague",value=rjs[0]["languages"][0]["name"])
 
-        cc = rjs[0]["alpha2Code"]
+            cc = rjs[0]["alpha2Code"]
 
-        furl = f"https://www.countryflags.io/{cc}/flat/64.png"
-        print(furl)
+            furl = f"https://www.countryflags.io/{cc}/flat/64.png"
 
-        e.set_thumbnail(url=furl)
+            e.set_thumbnail(url=furl)
 
-        e.timestamp = datetime.now()
-        e.set_footer(text="Technetium", icon_url=iconUrl)
+            e.timestamp = datetime.now()
+            e.set_footer(text="Technetium", icon_url=iconUrl)
+
+            await ctx.channel.send(embed=e)
+        except:
+            await sendError(ctx, "Unknown error encountered.")
+
+class stocksCog(commands.Cog, name = "Stocks"):
+    """
+    All commands surrounding stocks!
+    """
+    @commands.command(usage = "<ticker>")
+    async def ticker(self, ctx, ticker):
+        tickData = yf.Ticker(ticker)
+
+        tjs = tickData.info
+
+        #try:
+        e = discord.Embed(title=tjs["shortName"],description=f"Here's some info on ${ticker.upper()}")
 
         await ctx.channel.send(embed=e)
+        #except:
+        #    await sendError(ctx, "Unexpected error encountered!")
 
 class funCog(commands.Cog, name="Fun"):
     """
@@ -491,7 +510,7 @@ class funCog(commands.Cog, name="Fun"):
         embed.set_footer(text="Provided by randomfox.ca", icon_url=iconUrl)
         await ctx.channel.send(embed=embed)
 
-    @commands.command()
+    @commands.command(useage = "<number>")
     async def numfact(self,ctx,num):
         """
         Sends a random fact about a specified number, using the numbersapi API.
@@ -507,7 +526,8 @@ class funCog(commands.Cog, name="Fun"):
         # Error handling
         except:
             await sendError(ctx, "Please enter a number!")
-    @commands.command()
+            
+    @commands.command(usage = "<pokemon>")
     async def pokemon(self, ctx, pokemon):
         try:
             req = requests.get(f"https://pokeapi.co/api/v2/pokemon/{pokemon.lower()}")
@@ -525,6 +545,7 @@ class funCog(commands.Cog, name="Fun"):
 client.add_cog(utilityCog(client))
 client.add_cog(moderationCog(client))
 client.add_cog(funCog(client))
+client.add_cog(stocksCog(client))
 
 # Starts up the bot processes.
 keep_alive()
