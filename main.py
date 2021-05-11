@@ -224,16 +224,33 @@ class utilityCog(commands.Cog, name="Utility"):
 
             rjson = req.json()
 
-            e = discord.Embed(title=rjson['Title'],description=f"Released in {rjson['Released']}, rated {rjson['Rated']}")
+            e = discord.Embed(title=rjson['Title'],description=rjson['Plot'])
+
+            e.add_field(name="General Info",value=f"Released in {rjson['Released']}, rated {rjson['Rated']}, {rjson['Genre']}")
 
             e.add_field(name="Production",value=rjson['Production'])
+            e.add_field(name="Director",value=rjson['Director'])
+            
+            e.add_field(name="\u200B",value="\u200B",inline=False)
+
+            e.add_field(name="Runtime",value=rjson['Runtime'])
             e.add_field(name="Box Office",value=rjson['BoxOffice'])
+            e.add_field(name="Awards",value=rjson["Awards"])
+
+            e.add_field(name="\u200B",value="\u200B",inline=False)
+
+            for i in rjson["Ratings"]:
+                e.add_field(name=i["Source"],value=i["Value"])
 
             e.set_thumbnail(url=rjson["Poster"])
+            e.set_footer(text="Technetium",icon_url=iconUrl)
+            e.timestamp = datetime.now()
 
             await ctx.channel.send(embed=e)
+            #await ctx.channel.send(rjson)
         except BaseException:
             await sendError(ctx, "Error encountered!")
+            raise
 
     @commands.command(usage="<Time Scale> <Time Period> [Reason}")
     async def remindme(self, ctx, timeScale, timePeriod, *reason):
