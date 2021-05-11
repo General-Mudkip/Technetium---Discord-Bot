@@ -13,7 +13,6 @@ import requests
 from better_profanity import profanity
 import urllib.parse
 import yfinance as yf
-import traceback
 
 # Simple help command
 class revisedHelpCommand(commands.MinimalHelpCommand):
@@ -63,12 +62,13 @@ timeUnits = {
     }
 }
 
-iconUrl = "https://media.discordapp.net/attachments/833730060753436704/836585122261631066/Technetium.png?width=670&height=670"
+iconUrl = "https://media.discordapp.net/attachments/833730060753436704/841372371704741898/VelocitySquared.png?width=670&height=670"
 
 # Keys
 opwkey = os.environ['open_weather_key']
 gkey = os.environ["GOOGLE_KEY"]
 wakey = os.environ["WOLFRAM_ALPHA_ID"]
+omdbkey = os.environ["OMDB_KEY"]
 
 # Client Setup
 client = commands.Bot(command_prefix=prefix,
@@ -209,6 +209,32 @@ class utilityCog(commands.Cog, name="Utility"):
     """
     Some rather simple utility commands, aimed at improving quality of life.
     """
+
+    @commands.command(usage="<Movie Name>")
+    async def movie(self, ctx, *movieName):
+        """
+        Uses the OMDB API to return movie data.
+        """
+
+        try:
+            inputer = " ".join(movieName)
+            query = urllib.parse.quote_plus(inputer)
+
+            req = requests.get(f"http://www.omdbapi.com/?apikey={omdbkey}&t={query}")
+
+            rjson = req.json()
+
+            e = discord.Embed(title=rjson['Title'],description=f"Released in {rjson['Released']}, rated {rjson['Rated']}")
+
+            e.add_field(name="Production",value=rjson['Production'])
+            e.add_field(name="Box Office",value=rjson['BoxOffice'])
+
+            e.set_thumbnail(url=rjson["Poster"])
+
+            await ctx.channel.send(embed=e)
+        except BaseException:
+            await sendError(ctx, "Error encountered!")
+
     @commands.command(usage="<Time Scale> <Time Period> [Reason}")
     async def remindme(self, ctx, timeScale, timePeriod, *reason):
         """
@@ -378,15 +404,43 @@ class stocksCog(commands.Cog, name = "Stocks"):
     """
     @commands.command(usage = "<ticker>")
     async def ticker(self, ctx, ticker):
+
+        print("Recieved")
         tickData = yf.Ticker(ticker)
 
         tjs = tickData.info
+        print("Data gotten")
 
         #try:
         e = discord.Embed(title=tjs["shortName"],description=f"Here's some info on ${ticker.upper()}")
 
-        await ctx.channel.send(embed=e)
-        #except:
+        mc = f'{tjs["marketCap"]:,d}'
+        print(type(mc))
+        v = f'{tjs["volume"]:,d}'
+        dh = f'{tjs["dayHigh"]:,d}'
+        dl = f'{tjs["dayLow"]:,d}'
+        fdh = f'{tjs["fiftyTwoWeekHigh"]:,d}'
+        fdl = f'{tjs["fiftyTwoWeekLow"]:,d}'
+
+        e.add_field(name="Market Cap", value=f"{mc}$",inline=1)
+        e.add_field(name="Volume", value=f"{v}",inline=1)
+
+        e.add_field(name="\u200B",value="\u200B",inline=False)
+
+        e.add_field(name="Day High",value=f"{dh}$",inline=1)
+        e.add_field(name="Day Low",value=f"{dl}$", inline=1)
+
+        e.add_field(name="\u200B",value="\u200B",inline=False)
+
+        e.add_field(name="52 Week High",value=f"{fdh}$")
+        e.add_field(name="53 Week Low",value=f"{fdl}$")
+
+        e.set_thumbnail(url=tjs["logo_url"])
+        e.timestamp = datetime.now()
+        e.set_footer(text="Technetium",icon_url=iconUrl)
+
+        await ctx.channel.send(embed=e) 
+        #except BaseException:
         #    await sendError(ctx, "Unexpected error encountered!")
 
 class funCog(commands.Cog, name="Fun"):
@@ -542,6 +596,21 @@ class funCog(commands.Cog, name="Fun"):
             await ctx.channel.send(embed=e)
         except BaseException: 
             await sendError(ctx, "Unexpected error encountered!")
+
+    @commands.command()
+    async def credits(self, ctx):
+        e = discord.Embed(title="Credits",url="https://github.com/General-Mudkip/Technetium---Discord-Bot", description="Thanks for all the help!")
+
+        e.add_field(name="Creator",value="Bence R.",inline = 0)
+        e.add_field(name="Thanks to:",value="All my teachers and friends that helped debug and give feedback.")
+        e.add_field(name="GitHub Repo",value="This bot is open source, so feel free to commit any changes you feel like to the repo!")
+
+        e.set_thumbnail(url=iconUrl)
+
+        e.set_footer(text="Technetium",icon_url=iconUrl)
+        e.timestamp = datetime.now()
+
+        await ctx.channel.send(embed=e)
 
 # Adds all of the cogs (classes) to the bot
 client.add_cog(utilityCog(client))
