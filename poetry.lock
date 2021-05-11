@@ -242,6 +242,17 @@ version = "2021.1"
 
 [[package]]
 category = "main"
+description = "A Python library for OAuth 1.0/a, 2.0, and Ofly."
+name = "rauth"
+optional = false
+python-versions = "*"
+version = "0.7.3"
+
+[package.dependencies]
+requests = ">=1.2.3"
+
+[[package]]
+category = "main"
 description = "A library for interacting with features of repl.it"
 name = "replit"
 optional = false
@@ -349,7 +360,7 @@ pandas = ">=0.24"
 requests = ">=2.20"
 
 [metadata]
-content-hash = "cee49018b35f0a04fa91cd35bb95a9cdbcc916c63b3cac70a731a94cd4310224"
+content-hash = "0ebf6c9eae85c2bb4167ea691bd48d06fb43ce2b121f46a58ef67d75327d4ce7"
 python-versions = "^3.8"
 
 [metadata.files]
@@ -652,6 +663,10 @@ python-dateutil = [
 pytz = [
     {file = "pytz-2021.1-py2.py3-none-any.whl", hash = "sha256:eb10ce3e7736052ed3623d49975ce333bcd712c7bb19a58b9e2089d4057d0798"},
     {file = "pytz-2021.1.tar.gz", hash = "sha256:83a4a90894bf38e243cf052c8b58f381bfe9a7a483f6a9cab140bc7f702ac4da"},
+]
+rauth = [
+    {file = "rauth-0.7.3-py2-none-any.whl", hash = "sha256:b18590fbd77bc3d871936bbdb851377d1b0c08e337b219c303f8fc2b5a42ef2d"},
+    {file = "rauth-0.7.3.tar.gz", hash = "sha256:524cdbc1c28560eacfc9a9d40c59525eb8d00fdf07fbad86107ea24411477b0a"},
 ]
 replit = [
     {file = "replit-3.0.0-py3-none-any.whl", hash = "sha256:3dd4f21b8b2a44b8c645a15e87398fa129b356cb6a88faa5eedd30374cc404e1"},

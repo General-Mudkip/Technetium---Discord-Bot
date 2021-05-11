@@ -13,6 +13,7 @@ import requests
 from better_profanity import profanity
 import urllib.parse
 import yfinance as yf
+import rauth
 
 # Simple help command
 class revisedHelpCommand(commands.MinimalHelpCommand):
@@ -69,6 +70,7 @@ opwkey = os.environ['open_weather_key']
 gkey = os.environ["GOOGLE_KEY"]
 wakey = os.environ["WOLFRAM_ALPHA_ID"]
 omdbkey = os.environ["OMDB_KEY"]
+mkey = os.environ["MUSIC_KEY"]
 
 # Client Setup
 client = commands.Bot(command_prefix=prefix,
@@ -91,8 +93,11 @@ async def on_message(ctx):
         # It will send "HI!" in the channel the message was sent in.
         responseList = ["Yo!","Bonjour.","Wassup?","Hey.","Hello.","Hi!"]
         await ctx.channel.send(responseList[random.randint(0,len(responseList)-1)])
-    if profanity.contains_profanity(ctx.content) is True:
-        await ctx.delete()
+
+    # Censors "OMG". Until I get around to implementing a manual blacklist, then this will remain off.
+
+    #if profanity.contains_profanity(ctx.content) is True:
+    #    await ctx.delete()
 
 async def sendError(ctx, *error):
     """
@@ -631,6 +636,49 @@ class funCog(commands.Cog, name="Fun"):
             await ctx.channel.send(embed=e)
         except BaseException: 
             await sendError(ctx, "Unexpected error encountered!")
+    
+    
+    @commands.command(usage = "<Song>")
+    async def lyrics(self, ctx, *song):
+        """
+        Returns the lyrics of a given song.
+        """
+        try:
+            inputer = " ".join(song)
+            query = urllib.parse.quote_plus(inputer)
+
+            url = f"https://api.musixmatch.com/ws/1.1/track.search?q_track={query}&apikey={mkey}&s_track_rating=desc"
+
+            response = requests.get(url)
+
+            track_id = response.json()["message"]["body"]["track_list"][0]["track"]["track_id"]
+
+            url = f"https://api.musixmatch.com/ws/1.1/track.lyrics.get?apikey={mkey}&track_id={track_id}"
+
+            response = requests.get(url)
+
+            lyrics = response.json()["message"]["body"]["lyrics"]["lyrics_body"]
+
+            lyrics = lyrics[:1024]
+
+            print(lyrics)
+
+            lyrics = lyrics.replace("******* This Lyrics is NOT for Commercial use *******","")
+
+            if response.json()["message"]["body"]["lyrics"]["explicit"] == 1:
+                inputer = inputer + " ***(EXPLICIT)***"
+
+            e = discord.Embed(title=inputer.title(),description="Here's the lyrics to the song you requested!")
+            e.add_field(name="Lyrics",value=lyrics)
+
+            e.set_footer(text="Technetium",icon_url=iconUrl)
+            e.timestamp = datetime.now()
+
+            await ctx.channel.send(embed=e)
+
+        except BaseException:
+            await sendError(ctx, "Something went wrong.")
+            raise
 
     @commands.command()
     async def credits(self, ctx):
