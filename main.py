@@ -367,6 +367,10 @@ class utilityCog(commands.Cog, name="Utility"):
 
     @commands.command(usage = "<equation>")
     async def equation(self, ctx, *equation):
+        """
+        Returns a LaTeX render of the inputted equation.
+        """
+
         inputer = " ".join(equation)
         query = urllib.parse.quote_plus(inputer)
 
@@ -380,6 +384,10 @@ class utilityCog(commands.Cog, name="Utility"):
         
     @commands.command(usage="<country>")
     async def country(self, ctx, cName):
+        """
+        Returns information about the inputted country, such as population, latitude/longitude, and currency.
+        """
+
         try:
             req = requests.get(f"https://restcountries.eu/rest/v2/name/{cName.lower()}")
 
@@ -421,6 +429,9 @@ class stocksCog(commands.Cog, name = "Stocks"):
     """
     @commands.command(usage = "<ticker>")
     async def ticker(self, ctx, ticker):
+        """
+        Returns stock information about the inputted ticker, such as market cap or volume.
+        """
 
         print("Recieved")
         tickData = yf.Ticker(ticker)
@@ -466,6 +477,10 @@ class funCog(commands.Cog, name="Fun"):
     """
     @commands.command(usage="[coin, num] [. . . args . . .]",description="Generates some random stuff. Very cool.")
     async def random(self, ctx, *cmdArgs):
+        """
+        Some commands that return a random result, such as a random number or coin flip.
+        """
+
         # Checks if the user has entered any arguments
         if cmdArgs == ():
             ranCmdStr = ", ".join(randomCommands)
@@ -600,8 +615,11 @@ class funCog(commands.Cog, name="Fun"):
         except BaseException: 
             await sendError(ctx, "Please enter a valid number!")
 
-    @commands.command(usage = "<pokemon>")
+    @commands.command(usage = "<Pokémon>")
     async def pokemon(self, ctx, pokemon):
+        """
+        Sends an image of the provided Pokémon.
+        """
         try:
             req = requests.get(f"https://pokeapi.co/api/v2/pokemon/{pokemon.lower()}")
             e = discord.Embed(title=f"{pokemon.title()}!",description=f"Here's a photo of {pokemon.title()}")
@@ -616,6 +634,9 @@ class funCog(commands.Cog, name="Fun"):
 
     @commands.command()
     async def credits(self, ctx):
+        """
+        Lists all the people that helped me work on this bot!
+        """
         e = discord.Embed(title="Credits",url="https://github.com/General-Mudkip/Technetium---Discord-Bot", description="Thanks for all the help!")
 
         e.add_field(name="Creator",value="Bence R.",inline = 0)
