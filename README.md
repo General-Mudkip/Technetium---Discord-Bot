@@ -1,3 +1,5 @@
+[![CodeFactor](https://www.codefactor.io/repository/github/general-mudkip/technetium---discord-bot/badge?s=4da3a4d3e06fe72e93d56e33f3e279638a71ce59)](https://www.codefactor.io/repository/github/general-mudkip/technetium---discord-bot)
+
 # Technetium
 ###### A Discord Bot
 
