@@ -226,8 +226,13 @@ class utilityCog(commands.Cog, name="Utility"):
     """
     Some rather simple utility commands, aimed at improving quality of life.
     """
+
+    # EXTREMELY INSECURE. Token is out in the open.
     @commands.command(usage="<Query>")
     async def wolframalpha(self, ctx, *query):
+        """
+        Returns the result of a Wolfram|Alpha query you specify.
+        """
         inputer = " ".join(query)
         query = urllib.parse.quote_plus(inputer)
 
