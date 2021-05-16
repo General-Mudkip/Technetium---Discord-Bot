@@ -31,7 +31,7 @@ class revisedHelpCommand(commands.MinimalHelpCommand):
 
 # CONSTANTS
 # Command prefix that the bot will use to recognise commands.
-prefix = "."
+prefix = "tc."
 
 # List of commands that fall under "random"
 randomCommands = ["coin", "num"]
@@ -187,7 +187,7 @@ class moderationCog(commands.Cog, name="Moderation"):
         self.client = client
 
     @commands.command(usage="<Message Count>", aliases=["exterminatus"])
-    @commands.has_permissions(manage_messages=True)
+    @commands.has_permissions(manage_messages=False)
     async def purge(self, ctx, count=None):
         """
         Purges a set amount of messages.
@@ -556,7 +556,6 @@ class stocksCog(commands.Cog, name="Stocks"):
         #except BaseException:
         #    await sendError(ctx, "Unexpected error encountered!")
 
-
 class funCog(commands.Cog, name="Fun"):
     """
     Commands that don't necessarily serve a purpose or fit in any specific category. Give them a go!
@@ -757,22 +756,19 @@ class funCog(commands.Cog, name="Fun"):
 
             response = requests.get(url)
 
-            track_id = response.json(
-            )["message"]["body"]["track_list"][0]["track"]["track_id"]
+            track_id = response.json()["message"]["body"]["track_list"][0]["track"]["track_id"]
 
             url = f"https://api.musixmatch.com/ws/1.1/track.lyrics.get?apikey={mkey}&track_id={track_id}"
 
             response = requests.get(url)
 
-            lyrics = response.json(
-            )["message"]["body"]["lyrics"]["lyrics_body"]
+            lyrics = response.json()["message"]["body"]["lyrics"]["lyrics_body"]
 
             lyrics = lyrics[:1024]
 
             print(lyrics)
 
-            lyrics = lyrics.replace(
-                "******* This Lyrics is NOT for Commercial use *******", "")
+            lyrics = lyrics.replace("******* This Lyrics is NOT for Commercial use *******", "")
 
             if response.json()["message"]["body"]["lyrics"]["explicit"] == 1:
                 inputer = inputer + " ***(EXPLICIT)***"
