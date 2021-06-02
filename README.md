@@ -13,4 +13,7 @@ Utilises various APIs and libraries to provide a variety of fun and useful comma
 - Moderation commands
 - Coin flipping, random number generation
 - Cool(?) trivia facts about numbers!
-- Upcoming weather info command
+- Weather, Country, Song, Lyrics, Video game information
+- WolframAlpha interaction commands
+- Remind Me commands
+- An integrated Eight Ball command

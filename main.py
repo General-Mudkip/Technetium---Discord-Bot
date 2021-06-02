@@ -35,8 +35,10 @@ prefix = "tc."
 
 # List of commands that fall under "random"
 randomCommands = ["coin", "num"]
+eightball_answers = ["Yes!", "No.", "Hmmm... not sure.", "No clue.", "Think about it yourself.", "Approved.", "Not at all.", "I doubt it.", "Think again.", "Probably not.", "Probably", "Maybe", "Perhaps", "Absolutely not.", "Absolutely maybe.", "Possible.", "Impossible."]
 
 # Time units correspond to 1 of that unit in seconds
+
 timeUnits = {
     "s": {
         "s": 1,
@@ -73,6 +75,7 @@ wakey = os.environ["WOLFRAM_ALPHA_ID"]
 omdbkey = os.environ["OMDB_KEY"]
 mkey = os.environ["MUSIC_KEY"]
 gekey = os.environ["GENIUS_TOKEN"]
+rawgkey = os.environ["RAWG_KEY"]
 
 # Client Setup
 client = commands.Bot(command_prefix=prefix,
@@ -470,42 +473,59 @@ class utilityCog(commands.Cog, name="Utility"):
 
         try:
             req = requests.get(
-                f"https://restcountries.eu/rest/v2/name/{cName.lower()}")
+                f"https://restcountries.eu/rest/v2/name/{cName.lower()}?fullText=true")
 
             rjs = req.json()
 
-            c_name = rjs[0]["name"]
+            print(rjs)
 
-            e = discord.Embed(
-                title=f"{c_name}!",
-                description=f"Here's some data I found about {c_name}.")
+            if rjs["status"] == 404:
+                await sendError(ctx, "Country not found!")
+            else:
+                c_name = rjs[0]["name"]
 
-            e.add_field(name="Region", value=rjs[0]["region"])
-            e.add_field(name="Subregion", value=rjs[0]["subregion"])
-            e.add_field(name="Capital", value=rjs[0]["capital"])
-            e.add_field(name="Latitude", value=rjs[0]["latlng"][0])
-            e.add_field(name="Longitude", value=rjs[0]["latlng"][1])
+                e = discord.Embed(
+                    title=f"{c_name}!",
+                    description=f"Here's some data I found about {c_name}.")
 
-            e.add_field(name="\u200B", value="\u200B", inline=False)
+                e.add_field(name="Region", value=rjs[0]["region"])
+                e.add_field(name="Subregion", value=rjs[0]["subregion"])
+                e.add_field(name="Capital", value=rjs[0]["capital"])
+                try:
+                    e.add_field(name="Latitude", value=rjs[0]["latlng"][0])
+                    e.add_field(name="Longitude", value=rjs[0]["latlng"][1])
+                except BaseException:
+                    print("error fetching lat/long")
 
-            e.add_field(name="Population", value=rjs[0]["population"])
-            e.add_field(name="Timezone", value=rjs[0]["timezones"][0])
-            e.add_field(name="Currency", value=rjs[0]["currencies"][0]["name"])
-            e.add_field(name="Lanague", value=rjs[0]["languages"][0]["name"])
+                e.add_field(name="\u200B", value="\u200B", inline=False)
 
-            cc = rjs[0]["alpha2Code"]
+                e.add_field(name="Population", value=rjs[0]["population"])
+                e.add_field(name="Timezone", value=rjs[0]["timezones"][0])
+                e.add_field(name="Currency", value=rjs[0]["currencies"][0]["name"])
+                e.add_field(name="Lanague", value=rjs[0]["languages"][0]["name"])
 
-            furl = f"https://www.countryflags.io/{cc}/flat/64.png"
+                cc = rjs[0]["alpha2Code"]
 
-            e.set_thumbnail(url=furl)
+                furl = f"https://www.countryflags.io/{cc}/flat/64.png"
 
-            e.timestamp = datetime.now()
-            e.set_footer(text="Technetium", icon_url=iconUrl)
+                e.set_thumbnail(url=furl)
 
-            await ctx.channel.send(embed=e)
+                e.timestamp = datetime.now()
+                e.set_footer(text="Technetium", icon_url=iconUrl)
+
+                await ctx.channel.send(embed=e)
         except BaseException:
             await sendError(ctx, "Unexpected error encountered.")
+            raise
 
+    @commands.command(usage="[Message]")
+    async def echo(self, ctx, *query):
+        if ctx.author.id in [781131951414312979,567665494518267904]:
+            await ctx.message.delete()
+
+            message = " ".join(query)
+
+            await ctx.channel.send(message)
 
 class stocksCog(commands.Cog, name="Stocks"):
     """
@@ -517,6 +537,12 @@ class stocksCog(commands.Cog, name="Stocks"):
         Returns stock information about the inputted ticker, such as market cap or volume.
         """
 
+        e = discord.Embed(title="Getting data...",description="Give us a few seconds.")
+        e.set_footer(text="Technetum",icon_url=iconUrl)
+        e.timestamp = datetime.now()
+
+        toEdit = await ctx.channel.send(embed=e)
+
         print("Recieved")
         tickData = yf.Ticker(ticker)
 
@@ -527,13 +553,12 @@ class stocksCog(commands.Cog, name="Stocks"):
         e = discord.Embed(title=tjs["shortName"],
                           description=f"Here's some info on ${ticker.upper()}")
 
-        mc = f'{tjs["marketCap"]:,d}'
-        print(type(mc))
-        v = f'{tjs["volume"]:,d}'
-        dh = f'{tjs["dayHigh"]:,d}'
-        dl = f'{tjs["dayLow"]:,d}'
-        fdh = f'{tjs["fiftyTwoWeekHigh"]:,d}'
-        fdl = f'{tjs["fiftyTwoWeekLow"]:,d}'
+        mc = format(tjs["marketCap"],",d")
+        v = format(tjs["volume"],",d")
+        dh = tjs["dayHigh"]
+        dl = tjs["dayLow"]
+        fdh = tjs["fiftyTwoWeekHigh"]
+        fdl = tjs["fiftyTwoWeekLow"]
 
         e.add_field(name="Market Cap", value=f"{mc}$", inline=1)
         e.add_field(name="Volume", value=f"{v}", inline=1)
@@ -552,7 +577,7 @@ class stocksCog(commands.Cog, name="Stocks"):
         e.timestamp = datetime.now()
         e.set_footer(text="Technetium", icon_url=iconUrl)
 
-        await ctx.channel.send(embed=e)
+        await toEdit.edit(embed=e)
         #except BaseException:
         #    await sendError(ctx, "Unexpected error encountered!")
 
@@ -560,6 +585,20 @@ class funCog(commands.Cog, name="Fun"):
     """
     Commands that don't necessarily serve a purpose or fit in any specific category. Give them a go!
     """
+    @commands.command(usage="[Your Question!]",aliases=["8ball"])
+    async def eightball(self, ctx, *query):
+        message = " ".join(query)
+
+        e = discord.Embed(title="8 Ball. . .",description=message)
+        e.add_field(name="I think. . .",value= eightball_answers[random.randint(0,len(eightball_answers)-1)])
+
+        e.set_thumbnail(url="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/8-Ball_Pool.svg/1024px-8-Ball_Pool.svg.png")
+
+        e.timestamp = datetime.now()
+        e.set_footer(text="Technetium",icon_url=iconUrl)
+
+        await ctx.channel.send(embed=e)
+
     @commands.command(usage="[coin, num] [. . . args . . .]",
                       description="Generates some random stuff. Very cool.")
     async def random(self, ctx, *cmdArgs):
@@ -743,6 +782,27 @@ class funCog(commands.Cog, name="Fun"):
         except BaseException:
             await sendError(ctx, "Unexpected error encountered!")
 
+    @commands.command(usage="<Video Game>")
+    async def videogame(self,ctx,*name):
+        inputer = " ".join(name)
+        query = urllib.parse.quote_plus(inputer)
+
+        print(query)
+
+        url = f"https://api.rawg.io/api/games/{query}?key={rawgkey}"
+
+        response = requests.get(url)
+
+        js = response.json()
+
+        description = js["description_raw"][:2040   ]+". . ."
+
+        e = discord.Embed(title=js["name"],description=description)
+        e.set_thumbnail(url=js["background_image"])
+
+        print(response.json())
+        await ctx.channel.send(embed=e)
+
     @commands.command(usage="<Song>")
     async def lyrics(self, ctx, *song):
         """
@@ -880,6 +940,6 @@ client.add_cog(stocksCog(client))
 
 # Starts up the bot processes.
 keep_alive()
-# Gets the bot's token from the environment file. Stored in an .env file to stop public from accessing the token and gaining full access to it.
+# Gets the bot's token from the environment file. Stored in an .env file to stop public from accessing the token and gaining full access to the bot.
 token = os.environ.get("DISCORD_TOKEN")
 client.run(token)
